@@ -490,18 +490,25 @@ body.players-4 #btn-end-turn {
 
 /* CSS2D ship labels above ships */
 .ship-label {
-  color: #d8e8f8;
-  font-size: 12px;
-  background: rgba(0,0,0,0.7);
-  padding: 1px 5px;
-  border-radius: 2px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Arial', sans-serif;
+  background: rgba(0, 0, 0, 0.82);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.25);
   pointer-events: none;
-  font-family: 'Courier New', monospace;
   white-space: nowrap;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 .ship-label.player {
-  font-weight: bold;
-  font-size: 13px;
+  font-size: 15px;
+  color: #ffee88;
+  border-color: rgba(255,238,136,0.5);
+  background: rgba(0,0,0,0.88);
 }
 
 /* =============================================================
