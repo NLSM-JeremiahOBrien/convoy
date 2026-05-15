@@ -226,8 +226,8 @@ export class LibertyShip {
       }
       return;
     }
-    // Gentle bob — keep well above ocean surface
-    this.group.position.y = 1.5 + Math.sin(t * 0.8 + this.bobPhase) * 0.15;
+    // Float well above ocean surface
+    this.group.position.y = 8.0 + Math.sin(t * 0.8 + this.bobPhase) * 0.15;
     this.group.rotation.z = Math.sin(t * 0.5 + this.bobPhase) * 0.015;
     this.group.rotation.x = Math.sin(t * 0.7 + this.bobPhase + 1) * 0.008;
   }

@@ -14,6 +14,8 @@ export class UBoat {
   public turnsSubmerged = 0;
   public lastFireTurn = -10;
   public sinkProgress = 0;
+  // Running depth in feet — randomised at creation, changes when evading
+  public depthFeet: number = 100;  // 100 | 200 | 300 | 400 (aces can go to 500)
 
   private bobPhase = Math.random() * Math.PI * 2;
   private periscopeMesh: THREE.Mesh | null = null;
@@ -133,7 +135,7 @@ export class UBoat {
         if (this.markerSprite) this.markerSprite.visible = false;
         break;
       case 'surfaced':
-        this.group.position.y = 1.2;  // well above water
+        this.group.position.y = 8.0;  // well above water
         this.group.visible = true;
         for (const child of this.group.children) child.visible = true;
         if (this.periscopeMesh) this.periscopeMesh.position.y = 1.8;
@@ -141,7 +143,7 @@ export class UBoat {
         if (this.markerSprite) this.markerSprite.visible = true;
         break;
       case 'spotted':
-        this.group.position.y = 0.8;  // partially above water
+        this.group.position.y = 7.0;  // partially above water
         this.group.visible = true;
         for (const child of this.group.children) child.visible = true;
         if (this.periscopeMesh) this.periscopeMesh.position.y = 1.8;
@@ -155,6 +157,19 @@ export class UBoat {
         if (this.markerSprite) this.markerSprite.visible = false;
         break;
     }
+  }
+
+  /** Pick a random running depth on spawn or after evading. */
+  randomiseDepth() {
+    const levels = this.ace ? [100, 200, 300, 400, 500] : [100, 200, 300, 400];
+    this.depthFeet = levels[Math.floor(Math.random() * levels.length)];
+  }
+
+  /** Pick a new evasive depth (different from current). */
+  evadeDepth() {
+    const levels = this.ace ? [100, 200, 300, 400, 500] : [100, 200, 300, 400];
+    const others = levels.filter(d => d !== this.depthFeet);
+    this.depthFeet = others[Math.floor(Math.random() * others.length)];
   }
 
   damage(n: number) {
@@ -177,7 +192,7 @@ export class UBoat {
       return;
     }
     if (this.state === 'surfaced') {
-      this.group.position.y = 1.2 + Math.sin(t * 0.9 + this.bobPhase) * 0.1;
+      this.group.position.y = 8.0 + Math.sin(t * 0.9 + this.bobPhase) * 0.1;
       this.group.rotation.z = Math.sin(t * 0.6 + this.bobPhase) * 0.02;
     }
   }

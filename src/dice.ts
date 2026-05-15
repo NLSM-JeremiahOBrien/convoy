@@ -1,8 +1,9 @@
-/* Dice & RNG — visible 2d6 rolls with target-number resolution. */
+/* Dice & RNG — visible roll modals with sum-mode and count-mode. */
 
 export type DiceRollResult = {
   rolls: number[];
   total: number;
+  hits: number;         // count of dice >= hitTarget (countMode)
   target: number;
   success: boolean;
 };
@@ -19,14 +20,19 @@ export function rollNd6(n: number): number[] {
 
 /**
  * Animated dice roll modal.
- * Shows N dice rolling, then settles on the actual values,
- * shows outcome, waits for user to click CONTINUE.
+ *
+ * Two modes:
+ *  - Default (sum mode): total of all dice must reach `target` to succeed.
+ *  - countMode: each die >= `hitTarget` counts as a hit; success = hits >= 2.
+ *    Pass `hitTarget` alongside `countMode: true`.
  */
 export async function showDiceRoll(opts: {
   title: string;
   numDice: number;
-  target: number;       // sum needed to succeed
-  bonus?: number;       // added to total
+  target?: number;       // sum needed (sum mode)
+  hitTarget?: number;    // per-die threshold (count mode)
+  countMode?: boolean;   // count hits per die instead of summing
+  bonus?: number;
   successText: string;
   failureText: string;
 }): Promise<DiceRollResult> {
@@ -43,23 +49,26 @@ export async function showDiceRoll(opts: {
   closeBtn.style.display = 'none';
   modal.classList.add('active');
 
-  // Roll
   const rolls = rollNd6(opts.numDice);
   const bonus = opts.bonus ?? 0;
   const total = rolls.reduce((a, b) => a + b, 0) + bonus;
-  const success = total >= opts.target;
 
-  // Build dice DOM, animate
+  const countMode = opts.countMode ?? false;
+  const hitTarget = opts.hitTarget ?? 5;
+  const hits = countMode ? rolls.filter(r => r >= hitTarget).length : 0;
+  const success = countMode ? hits >= 2 : total >= (opts.target ?? 7);
+
+  // Build dice DOM
   const dieEls: HTMLElement[] = [];
   for (let i = 0; i < opts.numDice; i++) {
     const d = document.createElement('div');
     d.className = 'die rolling';
-    d.textContent = String(1 + Math.floor(Math.random() * 6));
+    d.textContent = String(rollDie());
     container.appendChild(d);
     dieEls.push(d);
   }
 
-  // Animate flickering values for a moment
+  // Flicker animation
   const flickerStart = performance.now();
   await new Promise<void>(resolve => {
     const interval = window.setInterval(() => {
@@ -71,16 +80,27 @@ export async function showDiceRoll(opts: {
     }, 70);
   });
 
-  // Settle to final values
+  // Settle — colour each die by hit/miss
   for (let i = 0; i < dieEls.length; i++) {
     dieEls[i].textContent = String(rolls[i]);
     dieEls[i].classList.remove('rolling');
-    dieEls[i].classList.add(success ? 'hit' : 'miss');
+    if (countMode) {
+      dieEls[i].classList.add(rolls[i] >= hitTarget ? 'hit' : 'miss');
+    } else {
+      dieEls[i].classList.add(success ? 'hit' : 'miss');
+    }
   }
 
-  outcomeEl.textContent =
-    `Rolled ${rolls.join(' + ')}${bonus ? ' +' + bonus : ''} = ${total} (need ${opts.target}+). ` +
-    (success ? opts.successText : opts.failureText);
+  // Outcome text
+  if (countMode) {
+    outcomeEl.textContent =
+      `${hits} hit${hits !== 1 ? 's' : ''} (need ${hitTarget}+ on each die, 2+ hits to damage). ` +
+      (success ? opts.successText : opts.failureText);
+  } else {
+    outcomeEl.textContent =
+      `Rolled ${rolls.join(' + ')}${bonus ? ' +' + bonus : ''} = ${total} (need ${opts.target}+). ` +
+      (success ? opts.successText : opts.failureText);
+  }
   outcomeEl.classList.add(success ? 'success' : 'failure');
 
   closeBtn.style.display = 'inline-block';
@@ -94,7 +114,7 @@ export async function showDiceRoll(opts: {
     closeBtn.addEventListener('click', handler);
   });
 
-  return { rolls, total, target: opts.target, success };
+  return { rolls, total, hits, target: opts.target ?? hitTarget, success };
 }
 
 /** Quick non-modal probability check. */

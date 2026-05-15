@@ -155,7 +155,7 @@ export class Game {
       const isAce = Math.random() < cfg.ACE_CHANCE && acePool.length > 0;
       const ace = isAce ? acePool.shift()! : null;
       const ub = new UBoat(`U-${100 + Math.floor(Math.random() * 900)}`, ace);
-      // Spread U-boats around / ahead of convoy
+      ub.randomiseDepth();  // assign random running depth
       const ang = Math.random() * Math.PI * 2;
       const dist = 80 + Math.random() * 120;
       ub.group.position.set(Math.cos(ang) * dist + 40, -5, Math.sin(ang) * dist);
@@ -385,66 +385,177 @@ export class Game {
     );
   }
 
+  /** Show depth selector UI; returns chosen depth in feet or null if cancelled. */
+  private showDepthSelector(): Promise<number | null> {
+    return new Promise((resolve) => {
+      const depths = [100, 200, 300, 400];
+      const modal = document.createElement('div');
+      modal.id = 'depth-selector';
+      modal.innerHTML = `
+        <div class="depth-modal">
+          <div class="depth-title">⚙ SET DEPTH CHARGE DEPTH</div>
+          <div class="depth-subtitle">Your sonar gives you a bearing — but not the depth.<br>Choose wrong and the charges explode harmlessly.</div>
+          <div class="depth-buttons">
+            ${depths.map(d => `<button class="depth-btn" data-depth="${d}">${d} ft</button>`).join('')}
+          </div>
+          <button class="depth-cancel">Cancel</button>
+        </div>
+      `;
+      // Style
+      const style = document.createElement('style');
+      style.id = 'depth-selector-style';
+      style.textContent = `
+        #depth-selector {
+          position:fixed;inset:0;z-index:3000;
+          background:rgba(0,0,0,0.75);
+          display:flex;align-items:center;justify-content:center;
+        }
+        .depth-modal {
+          background:#0d1f2d;border:2px solid #3a6a8a;
+          border-radius:12px;padding:28px 32px;
+          text-align:center;max-width:420px;width:90%;
+          box-shadow:0 0 40px rgba(0,120,200,0.3);
+        }
+        .depth-title {
+          font-size:22px;font-weight:900;color:#ffcc44;
+          text-transform:uppercase;letter-spacing:2px;
+          margin-bottom:10px;
+        }
+        .depth-subtitle {
+          font-size:14px;color:#99b8cc;margin-bottom:22px;line-height:1.5;
+        }
+        .depth-buttons {
+          display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+          margin-bottom:16px;
+        }
+        .depth-btn {
+          background:#1a3a5a;border:2px solid #4a8aaa;color:#fff;
+          font-size:20px;font-weight:700;padding:16px 20px;
+          border-radius:8px;cursor:pointer;min-width:80px;
+          transition:background 0.15s,transform 0.1s;
+        }
+        .depth-btn:hover,.depth-btn:active {
+          background:#2a5a8a;transform:scale(1.06);
+        }
+        .depth-cancel {
+          background:none;border:1px solid #445;color:#778;
+          padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;
+        }
+      `;
+      document.head.appendChild(style);
+      document.body.appendChild(modal);
+
+      modal.querySelectorAll<HTMLButtonElement>('.depth-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          modal.remove(); style.remove();
+          resolve(parseInt(btn.dataset.depth!));
+        });
+      });
+      modal.querySelector('.depth-cancel')!.addEventListener('click', () => {
+        modal.remove(); style.remove();
+        resolve(null);
+      });
+    });
+  }
+
   private async actionDepthCharge(dd: Destroyer, target: THREE.Vector3) {
     if (dd.depthCharges <= 0) return;
+
+    // ── Step 1: Player sets depth ────────────────────────────────────────────
+    const chosenDepth = await this.showDepthSelector();
+    if (chosenDepth === null) return;
+
     dd.depthCharges--;
 
-    // Find U-boats within blast radius
+    // ── Step 2: Find revealed U-boats within XZ blast radius ─────────────────
+    // Must have been pinged by sonar first (revealed=true)
     const candidates: UBoat[] = [];
     for (const ub of this.uboats) {
-      if (ub.state === 'destroyed') continue;
-      if (ub.state !== 'submerged' && ub.state !== 'spotted') continue;
-      const d = ub.group.position.distanceTo(target);
-      if (d < GAME_CONFIG.DEPTH_CHARGE_RANGE) candidates.push(ub);
-    }
-
-    // Visual splashes
-    for (let i = 0; i < 3; i++) {
-      const offset = new THREE.Vector3(
-        target.x + (Math.random() - 0.5) * 8,
-        0,
-        target.z + (Math.random() - 0.5) * 8,
+      if (ub.state === 'destroyed' || ub.state === 'surfaced') continue;
+      const xzDist = Math.hypot(
+        ub.group.position.x - target.x,
+        ub.group.position.z - target.z,
       );
-      setTimeout(() => {
-        this.effects.splash(offset, 1.4);
-      }, i * 150);
+      if (xzDist < GAME_CONFIG.DEPTH_CHARGE_RANGE && ub.revealed) {
+        candidates.push(ub);
+      }
     }
-    showMessage('💣 Depth charges away!', 'info');
 
-    await sleep(700);
+    // ── Step 3: Visual drop ──────────────────────────────────────────────────
+    for (let i = 0; i < 4; i++) {
+      const offset = new THREE.Vector3(
+        target.x + (Math.random() - 0.5) * 10,
+        0,
+        target.z + (Math.random() - 0.5) * 10,
+      );
+      setTimeout(() => this.effects.splash(offset, 1.4), i * 180);
+    }
+    showMessage(`💣 Depth charges set to ${chosenDepth} ft — away!`, 'info');
+    await sleep(900);
 
     if (candidates.length === 0) {
-      showMessage('💣 Depth charges detonated — no contacts.', 'warn');
+      showMessage('💣 Detonated — no sonar contacts in range. Ping sonar over the target first.', 'warn');
+      this.refreshHUD();
       return;
     }
 
+    // ── Step 4: Resolve per U-boat ───────────────────────────────────────────
     for (const ub of candidates) {
-      // If ace, show fact pop-up before resolution
       if (ub.ace && !ub.revealed) {
-        ub.revealed = true;
-        ub.setVisualState();
+        ub.revealed = true; ub.setVisualState();
         await showAceFact(ub.ace);
       }
 
-      const evade = ub.ace ? ub.ace.evadeBonus : 0;
+      // Depth match check — within 100 ft = charges in the kill zone
+      const depthDiff = Math.abs(chosenDepth - ub.depthFeet);
+      const inKillZone = depthDiff <= 100;
+
+      if (!inKillZone) {
+        ub.evadeDepth();
+        showMessage(
+          `💣 Charges detonated at ${chosenDepth} ft — ${ub.id} is running at ${ub.depthFeet} ft. Miss! Sub changes depth.`,
+          'warn',
+        );
+        continue;
+      }
+
+      // In kill zone — roll 4d6, each 5-6 = hit
+      const evadeBonus = ub.ace ? ub.ace.evadeBonus : 0;
+      const hitTarget  = 5 + evadeBonus;  // 5+ normally, 6+ vs aces with evade
       const result = await showDiceRoll({
-        title: `DEPTH CHARGE — vs ${ub.id}${ub.ace ? ' (' + ub.ace.name + ')' : ''}`,
-        numDice: 2,
-        target: 7 + evade,
-        successText: 'DIRECT HIT! U-boat damaged.',
-        failureText: 'Charges miss — U-boat slips away.',
+        title: `DEPTH CHARGES vs ${ub.id}${ub.ace ? ' · ' + ub.ace.name : ''} @ ${ub.depthFeet} ft`,
+        numDice: 4,
+        hitTarget,
+        countMode: true,
+        successText: `DEPTH CORRECT — charges bracket the sub!`,
+        failureText: `${ub.id} slips through the pattern.`,
       });
-      if (result.success) {
-        ub.damage(20);
-        this.effects.explosion(ub.group.position, 1.5);
+
+      const hits = result.hits ?? 0;
+
+      if (hits >= 2) {
+        ub.damage(35);
+        this.effects.explosion(ub.group.position, 1.8);
         if (ub.state === 'destroyed') {
           this.uboatsSunk++;
-          showMessage(`💀 ${ub.id}${ub.ace ? ' (' + ub.ace.name + ')' : ''} SUNK!`, 'good');
+          showMessage(`💀 ${ub.id}${ub.ace ? ' (' + ub.ace.name + ')' : ''} SUNK by depth charges!`, 'good');
         } else {
-          showMessage(`💥 ${ub.id} damaged. Hull: ${ub.hull}`, 'good');
+          // Roll to force surface (5-6 on d6)
+          const surfaceRoll = Math.ceil(Math.random() * 6);
+          if (surfaceRoll >= 5) {
+            ub.state = 'surfaced'; ub.revealed = true; ub.setVisualState();
+            showMessage(`💥 ${ub.id} DAMAGED and FORCED TO SURFACE — open fire with deck guns!`, 'good');
+          } else {
+            ub.evadeDepth();
+            showMessage(`💥 ${ub.id} damaged (Hull: ${ub.hull}) — dives to new depth.`, 'good');
+          }
         }
+      } else if (hits === 1) {
+        ub.damage(12); ub.evadeDepth();
+        showMessage(`💣 Near miss — ${ub.id} shaken, changes depth. Hull: ${ub.hull}`, 'warn');
       } else {
-        showMessage(`${ub.id} evades the charges.`, 'warn');
+        ub.evadeDepth();
+        showMessage(`${ub.id} avoids the pattern — changes depth.`, 'warn');
       }
     }
     this.refreshHUD();
