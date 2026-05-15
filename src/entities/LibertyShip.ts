@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 
 export type ShipStatus = 'healthy' | 'damaged' | 'crippled' | 'sunk';
 
@@ -73,9 +74,9 @@ export class LibertyShip {
     const geo = await loadSTLOnce();
     if (!geo) return; // keep procedural fallback
 
-    // Remove procedural children
-    while (this.group.children.length > 0) {
-      const child = this.group.children[0];
+    // Remove only Mesh children (procedural geometry) — preserve CSS2DObject labels
+    const toRemove = this.group.children.filter(c => !(c instanceof CSS2DObject));
+    for (const child of toRemove) {
       this.group.remove(child);
       if (child instanceof THREE.Mesh) {
         child.geometry.dispose();
