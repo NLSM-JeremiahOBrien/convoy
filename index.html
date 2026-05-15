@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Convoy: Battle of the North Atlantic</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Fullscreen / kiosk button (top-right corner, always visible) -->
+    <button id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
+
+    <!-- Title Screen -->
+    <div id="title-screen" class="screen active">
+      <div class="title-inner">
+        <h1>CONVOY</h1>
+        <h2>BATTLE OF THE NORTH ATLANTIC</h2>
+        <p class="historical">
+          <em>September 1942.</em> A convoy of 25 American Liberty ships steams from
+          Halifax to Liverpool, loaded with vital war materiel. Lurking beneath the gray
+          Atlantic swells, a wolfpack of German U-boats stalks the merchant fleet. As
+          commander of an escort destroyer, you must guide the convoy through days and
+          nights of submarine warfare. Hunt the U-boats. Save the ships.
+        </p>
+
+        <div class="setup-panel">
+          <div class="setup-row">
+            <label>MISSION LENGTH</label>
+            <div class="seg" id="seg-length">
+              <button class="seg-btn active" data-value="quick">QUICK (7 TURNS)</button>
+              <button class="seg-btn" data-value="full">FULL (14 TURNS)</button>
+            </div>
+          </div>
+          <div class="setup-row">
+            <label>PLAYERS</label>
+            <div class="seg" id="seg-players">
+              <button class="seg-btn active" data-value="1">1</button>
+              <button class="seg-btn" data-value="2">2</button>
+              <button class="seg-btn" data-value="3">3</button>
+              <button class="seg-btn" data-value="4">4</button>
+            </div>
+          </div>
+          <div class="setup-row" id="player-names">
+            <!-- filled by JS -->
+          </div>
+          <div class="setup-row">
+            <label>TUTORIAL</label>
+            <div class="seg" id="seg-tutorial">
+              <button class="seg-btn active" data-value="on">ON</button>
+              <button class="seg-btn" data-value="off">OFF</button>
+            </div>
+          </div>
+        </div>
+
+        <button id="start-btn">▶ START MISSION</button>
+        <div id="credits">
+          SS Jeremiah O'Brien Educational Project · Pier 45, San Francisco<br>
+          For the Cub Scouts who sleep aboard her tonight
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="screen">
+      <!-- Top center: Turn/Phase/Progress (shared) -->
+      <div class="panel" id="hud-top-center">
+        <div class="hud-block">
+          <div class="hud-label">TURN</div>
+          <div class="hud-value" id="turn-display">1/7</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">PHASE</div>
+          <div class="hud-value" id="phase-display">☀ DAY</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">PROGRESS</div>
+          <div class="hud-value" id="progress-display">0%</div>
+          <div id="progress-bar"><div id="progress-fill"></div></div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">CONVOY</div>
+          <div class="hud-value"><span id="convoy-alive">25</span>/25</div>
+        </div>
+        <div class="hud-block">
+          <div class="hud-label">U-BOATS</div>
+          <div class="hud-value" id="uboat-display">?/?</div>
+        </div>
+      </div>
+
+      <!-- Convoy strip (left edge) -->
+      <div class="panel" id="convoy-panel">
+        <div class="panel-title">CONVOY</div>
+        <div id="convoy-grid"></div>
+      </div>
+
+      <!-- Per-player corner panels (1-4) -->
+      <div class="player-corner" data-corner="0">
+        <div class="player-tag"></div>
+        <div class="player-hull-row">
+          <span>HULL</span>
+          <div class="health-bar"><div class="health-fill"></div></div>
+        </div>
+        <div class="player-actions">
+          <button class="action-btn" data-action="sonar">
+            <div class="action-icon">🔊</div>
+            <div class="action-label">SONAR<br>PING</div>
+            <div class="action-status">READY</div>
+          </button>
+          <button class="action-btn" data-action="lookout">
+            <div class="action-icon">🔭</div>
+            <div class="action-label">LOOKOUT</div>
+            <div class="action-status">READY</div>
+          </button>
+          <button class="action-btn" data-action="depthcharge">
+            <div class="action-icon">💣</div>
+            <div class="action-label">DEPTH<br>CHARGE</div>
+            <div class="action-status">×12</div>
+          </button>
+          <button class="action-btn" data-action="deckgun">
+            <div class="action-icon">🔫</div>
+            <div class="action-label">DECK<br>GUN</div>
+            <div class="action-status">READY</div>
+          </button>
+          <button class="action-btn" data-action="ram">
+            <div class="action-icon">💥</div>
+            <div class="action-label">RAM</div>
+            <div class="action-status">RISKY</div>
+          </button>
+        </div>
+      </div>
+      <div class="player-corner" data-corner="1"></div>
+      <div class="player-corner" data-corner="2"></div>
+      <div class="player-corner" data-corner="3"></div>
+
+      <!-- Shared END TURN button -->
+      <button id="btn-end-turn">END TURN ▶</button>
+
+      <!-- Sonar overlay (transient ring) -->
+      <div id="sonar-display"></div>
+
+      <!-- Message log -->
+      <div id="message-log"></div>
+    </div>
+
+    <!-- Tutorial overlay -->
+    <div id="tutorial-overlay" class="screen">
+      <div class="tutorial-box">
+        <h3 id="tut-title">WELCOME, COMMANDER</h3>
+        <p id="tut-body"></p>
+        <div class="tutorial-buttons">
+          <button id="tut-skip">SKIP TUTORIAL</button>
+          <button id="tut-next">NEXT ▶</button>
+        </div>
+        <div class="tut-progress" id="tut-progress"></div>
+      </div>
+    </div>
+
+    <!-- Historical fact modal (ace commander reveal) -->
+    <div id="fact-modal" class="screen">
+      <div class="fact-box">
+        <div class="fact-header">⚠ U-BOAT ACE DETECTED ⚠</div>
+        <h2 id="fact-name"></h2>
+        <div id="fact-rank"></div>
+        <p id="fact-body"></p>
+        <button id="fact-continue">CONTINUE</button>
+      </div>
+    </div>
+
+    <!-- Dice Modal -->
+    <div id="dice-modal" class="screen">
+      <div class="dice-box">
+        <h3 id="dice-title">ROLLING...</h3>
+        <div class="dice-container" id="dice-container"></div>
+        <div class="dice-outcome" id="dice-outcome"></div>
+        <button class="dice-close" id="dice-close" style="display:none">CONTINUE</button>
+      </div>
+    </div>
+
+    <!-- End Screen -->
+    <div id="end-screen" class="screen">
+      <h1 id="end-title">VICTORY</h1>
+      <div id="end-stats"></div>
+      <div class="end-real-history">
+        <p>
+          <strong>The real story:</strong> The Battle of the Atlantic raged from 1939 to 1945. Allied
+          convoys lost more than 3,500 merchant ships and 175 warships. But the U-boat fleet lost
+          783 submarines and 30,000 of 39,000 sailors — the highest casualty rate of any service
+          in WWII.
+        </p>
+        <p>
+          The <strong>SS Jeremiah O'Brien</strong> — the ship you're sleeping on tonight —
+          was a Liberty ship just like those in this convoy. Built in 1943, she crossed the
+          Atlantic, supported the D-Day landings at Normandy, and survived the war. She's
+          one of only two operational Liberty ships left in the world, and she lives right here
+          at <strong>Pier 45, San Francisco</strong>. Sweet dreams, Scouts. ⚓
+        </p>
+      </div>
+      <button id="restart-btn">▶ NEW MISSION</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
