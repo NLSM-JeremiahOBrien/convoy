@@ -12,6 +12,7 @@ export class Destroyer {
   public sonarCooldown = 0;
   public sonarPingsLeft = 5;
   public deckGunCooldown = 0;
+  public depthChargeUsedThisTurn = false;
   public armedAction: 'sonar' | 'depthcharge' | 'deckgun' | 'ram' | 'lookout' | null = null;
   public targetWorldPos: THREE.Vector3 | null = null;
   public moveTokens = 1;
@@ -331,6 +332,7 @@ export class Destroyer {
     if (this.sonarCooldown > 0) this.sonarCooldown--;
     if (this.deckGunCooldown > 0) this.deckGunCooldown--;
     this.sonarPingsLeft = 5;
+    this.depthChargeUsedThisTurn = false;
     this.armedAction = null;
     this.moveTokens = 1;
   }

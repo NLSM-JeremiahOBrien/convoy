@@ -298,6 +298,10 @@ export class Game {
       showMessage('Out of depth charges!', 'danger');
       return;
     }
+    if (action === 'depthcharge' && dd.depthChargeUsedThisTurn) {
+      showMessage('Depth charges already deployed this turn — wait for next turn.', 'warn');
+      return;
+    }
     if (action === 'deckgun' && dd.deckGunCooldown > 0) {
       showMessage('Deck gun reloading.', 'warn');
       return;
@@ -466,6 +470,7 @@ export class Game {
     if (chosenDepth === null) return;
 
     dd.depthCharges--;
+    dd.depthChargeUsedThisTurn = true;
 
     // ── Step 2: Find revealed U-boats within XZ blast radius ─────────────────
     // Must have been pinged by sonar first (revealed=true)
@@ -822,7 +827,7 @@ export class Game {
       };
       updateStatus('sonar', dd.sonarPingsLeft > 0 ? `×${dd.sonarPingsLeft}` : 'EMPTY', dd.sonarPingsLeft <= 0);
       updateStatus('lookout', 'READY');
-      updateStatus('depthcharge', `×${dd.depthCharges}`, dd.depthCharges <= 0);
+      updateStatus('depthcharge', dd.depthChargeUsedThisTurn ? 'USED' : `×${dd.depthCharges}`, dd.depthCharges <= 0 || dd.depthChargeUsedThisTurn);
       updateStatus('deckgun', dd.deckGunCooldown > 0 ? 'RELOAD' : 'READY', dd.deckGunCooldown > 0);
       updateStatus('ram', 'RISKY');
     }
