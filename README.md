@@ -36,7 +36,7 @@ npm run preview  # preview the production build
 - Liberty ship names drawn from the actual fleet, including
   *SS Jeremiah O'Brien* and *SS John W. Brown* — the two operational Libertys
   still afloat.
-- End-screen connects the game back to the real ship at Pier 45 in
+- End-screen connects the game back to the real ship at Pier 35 in
   San Francisco where the Scouts are sleeping.
 
 ## File layout

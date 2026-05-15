@@ -22,7 +22,7 @@ touchscreen kiosk aboard the ship and on a public URL.
 - Quick Mission (7 turns) and Full Mission (14 turns) options
 - Step-by-step tutorial overlay for first-time players
 - Fullscreen / kiosk mode toggle
-- Victory / defeat screen referencing the real Jeremiah O'Brien at Pier 45
+- Victory / defeat screen referencing the real Jeremiah O'Brien at Pier 35
 - Pure procedural assets — no external textures/models — fully offline-capable
 - Vite + TypeScript build, deployable as static files
 
