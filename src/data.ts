@@ -139,7 +139,7 @@ export const GAME_CONFIG = {
   SONAR_PINGS_PER_TURN: 5,      // pings allowed per turn per destroyer
   DECK_GUN_COOLDOWN: 0,
   SONAR_RANGE: 60,              // world units
-  DEPTH_CHARGE_RANGE: 18,
+  DEPTH_CHARGE_RANGE: 50,
   DECK_GUN_RANGE: 90,
   CONVOY_SPEED: 6,              // forward movement per turn
   UBOAT_SPEED_SUBMERGED: 3,
