@@ -506,14 +506,16 @@ export class Game {
         await showAceFact(ub.ace);
       }
 
-      // Depth match check — within 100 ft = charges in the kill zone
+      // Depth match check — within 100 ft above OR below = kill zone
+      // Depth levels are 100ft apart so this means: exact match OR one level off
       const depthDiff = Math.abs(chosenDepth - ub.depthFeet);
-      const inKillZone = depthDiff <= 100;
+      const inKillZone = depthDiff <= 100;  // ±100 ft tolerance
 
       if (!inKillZone) {
         ub.evadeDepth();
+        const dir = chosenDepth < ub.depthFeet ? 'too shallow' : 'too deep';
         showMessage(
-          `💣 Charges detonated at ${chosenDepth} ft — ${ub.id} is running at ${ub.depthFeet} ft. Miss! Sub changes depth.`,
+          `💣 Charges at ${chosenDepth} ft — ${dir}! ${ub.id} is outside the kill zone and changes depth.`,
           'warn',
         );
         continue;
