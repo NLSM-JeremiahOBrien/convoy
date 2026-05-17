@@ -1,6 +1,7 @@
 /* Entry point — title screen → game setup → Game instance. */
 import { Game, type GameOptions } from './Game';
 import { PLAYER_COLORS } from './data';
+import { showLeaderboard } from './leaderboard';
 
 // ---------- Title screen state ----------
 let length: 'quick' | 'full' = 'quick';
@@ -57,6 +58,11 @@ function setupTitleScreen() {
 
   // Fullscreen toggle
   document.getElementById('fullscreen-btn')!.addEventListener('click', toggleFullscreen);
+
+  // Leaderboard button on title screen
+  document.getElementById('leaderboard-btn')!.addEventListener('click', () => {
+    showLeaderboard({ attractMode: false });
+  });
 }
 
 function renderPlayerInputs() {
@@ -113,3 +119,10 @@ document.addEventListener('touchend', (e) => {
 }, { passive: false });
 
 setupTitleScreen();
+
+// If loaded as game.ssjeremiahobrien.org/scores (or ?scores), jump straight
+// to leaderboard in non-attract mode so it stays open until closed.
+if (window.location.pathname.endsWith('/scores') ||
+    new URLSearchParams(window.location.search).has('scores')) {
+  showLeaderboard({ attractMode: false });
+}

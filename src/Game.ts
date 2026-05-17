@@ -13,6 +13,7 @@ import { planUBoatTurn, type AIAction } from './ai/UBoatAI';
 import { showDiceRoll, rollCheck, rollNd6 } from './dice';
 import { showMessage, showAceFact, Tutorial, DEFAULT_TUTORIAL_STEPS } from './ui/UI';
 import { showMissionLog, type MissionStats } from './mission-log';
+import { showLeaderboard } from './leaderboard';
 import {
   LIBERTY_SHIP_NAMES,
   DESTROYER_NAMES,
@@ -904,7 +905,12 @@ export class Game {
       score,
       date:        new Date().toISOString(),
     };
-    setTimeout(() => showMissionLog(missionStats), 1800);
+    setTimeout(async () => {
+      await showMissionLog(missionStats);
+      // Attract mode: show the leaderboard for 30s then reload to title
+      await showLeaderboard({ attractMode: true });
+      location.reload();
+    }, 1800);
   }
 
   // ---------- Render ----------

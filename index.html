@@ -55,6 +55,7 @@
         </div>
 
         <button id="start-btn">▶ START MISSION</button>
+        <button id="leaderboard-btn" class="lb-title-btn">🏆 HONOR ROLL</button>
         <div id="credits">
           SS Jeremiah O'Brien Educational Project · Pier 35, San Francisco<br>
           For the Cub Scouts who sleep aboard her tonight
@@ -200,6 +201,41 @@
       <button id="restart-btn">▶ NEW MISSION</button>
     </div>
   </div>
+
+    <!-- Leaderboard Screen (Phase 3) -->
+    <div id="leaderboard-screen" class="screen">
+      <div class="lb-wrap">
+        <div class="lb-header">
+          <div class="lb-title">⚓ CONVOY HONOR ROLL ⚓</div>
+          <div class="lb-subtitle">SS Jeremiah O'Brien · Battle of the North Atlantic</div>
+        </div>
+
+        <div id="lb-stats-bar" class="lb-stats-bar"></div>
+
+        <div id="lb-filters" class="lb-filters"></div>
+
+        <div class="lb-table-wrap">
+          <table class="lb-table">
+            <thead>
+              <tr>
+                <th>RANK</th>
+                <th>COMMANDER</th>
+                <th>SCORE</th>
+                <th>SHIPS</th>
+                <th>U-BOATS</th>
+                <th>DATE</th>
+              </tr>
+            </thead>
+            <tbody id="lb-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="lb-footer">
+          <button id="lb-close" class="lb-close-btn">CLOSE</button>
+          <span id="lb-countdown" class="lb-countdown"></span>
+        </div>
+      </div>
+    </div>
 
     <!-- Mission Log Screen (Phase 2) -->
     <div id="mission-log" class="screen">
