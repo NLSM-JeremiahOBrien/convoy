@@ -12,6 +12,7 @@ import { EffectsManager } from './entities/Effects';
 import { planUBoatTurn, type AIAction } from './ai/UBoatAI';
 import { showDiceRoll, rollCheck, rollNd6 } from './dice';
 import { showMessage, showAceFact, Tutorial, DEFAULT_TUTORIAL_STEPS } from './ui/UI';
+import { showMissionLog, type MissionStats } from './mission-log';
 import {
   LIBERTY_SHIP_NAMES,
   DESTROYER_NAMES,
@@ -873,14 +874,14 @@ export class Game {
   private endGame(victory: boolean) {
     this.gameOver = true;
     const survivors = this.computeSurvivors();
-    const screen = document.getElementById('end-screen') as HTMLElement;
-    const title = document.getElementById('end-title') as HTMLElement;
-    const stats = document.getElementById('end-stats') as HTMLElement;
+    const endScreen  = document.getElementById('end-screen') as HTMLElement;
+    const title      = document.getElementById('end-title')  as HTMLElement;
+    const statsPanel = document.getElementById('end-stats')  as HTMLElement;
     title.textContent = victory ? '⚓ MISSION ACCOMPLISHED ⚓' : '☠ CONVOY LOST ☠';
-    title.className = victory ? 'victory' : 'defeat';
-    const need = Math.ceil(GAME_CONFIG.CONVOY_SIZE * GAME_CONFIG.VICTORY_RATIO);
+    title.className   = victory ? 'victory' : 'defeat';
+    const need  = Math.ceil(GAME_CONFIG.CONVOY_SIZE * GAME_CONFIG.VICTORY_RATIO);
     const score = survivors * 100 + this.uboatsSunk * 200;
-    stats.innerHTML = `
+    statsPanel.innerHTML = `
       <div class="row"><span>Ships saved</span><span class="val">${survivors} / ${GAME_CONFIG.CONVOY_SIZE}</span></div>
       <div class="row"><span>Ships sunk</span><span class="val">${GAME_CONFIG.CONVOY_SIZE - survivors}</span></div>
       <div class="row"><span>U-boats destroyed</span><span class="val">${this.uboatsSunk} / ${this.uboats.length}</span></div>
@@ -888,7 +889,22 @@ export class Game {
       <div class="row"><span>Victory threshold</span><span class="val">${need} ships</span></div>
       <div class="row"><span>Final score</span><span class="val">${score}</span></div>
     `;
-    screen.classList.add('active');
+    endScreen.classList.add('active');
+
+    // Phase 2: show mission log form after a brief pause so players
+    // can absorb the results before the form slides in.
+    const missionStats: MissionStats = {
+      shipsSaved:  survivors,
+      shipsSunk:   GAME_CONFIG.CONVOY_SIZE - survivors,
+      uboatsSunk:  this.uboatsSunk,
+      uboatsTotal: this.uboats.length,
+      turnsPlayed: Math.min(this.turn, this.opts.totalTurns),
+      totalTurns:  this.opts.totalTurns,
+      outcome:     victory ? 'victory' : 'defeat',
+      score,
+      date:        new Date().toISOString(),
+    };
+    setTimeout(() => showMissionLog(missionStats), 1800);
   }
 
   // ---------- Render ----------

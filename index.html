@@ -201,6 +201,56 @@
     </div>
   </div>
 
+    <!-- Mission Log Screen (Phase 2) -->
+    <div id="mission-log" class="screen">
+      <div class="ml-box">
+        <div class="ml-header">⚓ LOG YOUR MISSION ⚓</div>
+        <p class="ml-intro">
+          You saved <strong><span id="ml-ships-saved">?</span> of 25 ships</strong>.
+          Sign the crew manifest — future sailors will know your name.
+        </p>
+        <form id="mission-log-form" novalidate>
+          <div class="ml-field">
+            <label for="ml-name">NAME</label>
+            <input id="ml-name" type="text" placeholder="First Last"
+                   maxlength="80" autocomplete="name" />
+          </div>
+          <div class="ml-field">
+            <label for="ml-email">EMAIL</label>
+            <input id="ml-email" type="email" placeholder="you@example.com"
+                   maxlength="120" autocomplete="email" />
+          </div>
+          <div class="ml-field ml-check-row">
+            <input id="ml-optin" type="checkbox" />
+            <label for="ml-optin">
+              Add me to the SS Jeremiah O'Brien mailing list<br>
+              <span class="ml-fine">
+                You can unsubscribe at any time.
+                <a href="https://ssjeremiahobrien.org/privacy"
+                   target="_blank" rel="noopener">Privacy policy</a>.
+              </span>
+            </label>
+          </div>
+          <div class="ml-field">
+            <label for="ml-troop">
+              SCOUT TROOP # <span class="ml-opt">(optional)</span>
+            </label>
+            <input id="ml-troop" type="text" placeholder="e.g. Pack 42"
+                   maxlength="40" />
+          </div>
+          <div id="ml-status" class="ml-status"></div>
+          <div class="ml-buttons">
+            <button type="submit" id="ml-submit" class="ml-btn primary">
+              RECORD MY MISSION
+            </button>
+            <button type="button" id="ml-skip" class="ml-btn secondary">
+              Play Again →
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
