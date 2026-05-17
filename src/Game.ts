@@ -984,19 +984,19 @@ export class Game {
       }
       .aa-plane {
         position: fixed; pointer-events: all; cursor: crosshair;
-        font-size: 48px; z-index: 2001;
-        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+        width: 120px; height: auto; z-index: 2001;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
         transition: transform 0.1s;
         user-select: none;
       }
       .aa-plane:hover { transform: scale(1.15); }
       .aa-plane.hit {
-        color: orange !important;
         animation: aa-hit 0.3s ease-out;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6)) brightness(3) sepia(1) saturate(5) hue-rotate(-20deg);
       }
       @keyframes aa-hit {
-        0% { transform: scale(1.3); filter: brightness(3); }
-        100% { transform: scale(1); filter: brightness(1); }
+        0% { transform: scale(1.3); }
+        100% { transform: scale(1); }
       }
       .aa-plane.destroyed {
         animation: aa-destroy 0.8s ease-out forwards;
@@ -1050,7 +1050,46 @@ export class Game {
       planesSpawned++;
       const el = document.createElement('div');
       el.className = 'aa-plane';
-      el.textContent = '✈️';
+      // Fw 200 Condor — top-down view: wide wings, 4 engines, twin tail, Balkenkreuz
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 80" width="120" height="60">
+        <!-- Upper wing -->
+        <polygon points="58,38 104,38 98,4 64,4" fill="#7a8b68"/>
+        <!-- Lower wing -->
+        <polygon points="58,42 104,42 98,76 64,76" fill="#7a8b68"/>
+        <!-- Wing center join (slight shadow) -->
+        <rect x="58" y="37" width="46" height="6" fill="#6b7a5a"/>
+        <!-- Tail horizontal stabilizers -->
+        <polygon points="128,38 128,27 148,30 148,38" fill="#7a8b68"/>
+        <polygon points="128,42 128,53 148,50 148,42" fill="#7a8b68"/>
+        <!-- Fuselage -->
+        <ellipse cx="76" cy="40" rx="66" ry="7" fill="#6b7a5a"/>
+        <!-- Nose tip -->
+        <ellipse cx="13" cy="40" rx="5" ry="4" fill="#4a5a3a"/>
+        <!-- Cockpit glazing -->
+        <ellipse cx="24" cy="38" rx="8" ry="3" fill="#88ccdd" opacity="0.85"/>
+        <!-- Engine outer top -->
+        <ellipse cx="80" cy="11" rx="10" ry="3.5" fill="#3a4a2a"/>
+        <ellipse cx="80" cy="11" rx="6" ry="2" fill="#111"/>
+        <!-- Engine inner top -->
+        <ellipse cx="80" cy="26" rx="10" ry="3.5" fill="#3a4a2a"/>
+        <ellipse cx="80" cy="26" rx="6" ry="2" fill="#111"/>
+        <!-- Engine inner bottom -->
+        <ellipse cx="80" cy="54" rx="10" ry="3.5" fill="#3a4a2a"/>
+        <ellipse cx="80" cy="54" rx="6" ry="2" fill="#111"/>
+        <!-- Engine outer bottom -->
+        <ellipse cx="80" cy="69" rx="10" ry="3.5" fill="#3a4a2a"/>
+        <ellipse cx="80" cy="69" rx="6" ry="2" fill="#111"/>
+        <!-- Balkenkreuz upper wing -->
+        <rect x="66" y="15" width="15" height="4" fill="white"/>
+        <rect x="72" y="9" width="3" height="16" fill="white"/>
+        <rect x="66.5" y="15.5" width="14" height="3" fill="#111"/>
+        <rect x="72.5" y="9.5" width="2" height="15" fill="#111"/>
+        <!-- Balkenkreuz lower wing -->
+        <rect x="66" y="61" width="15" height="4" fill="white"/>
+        <rect x="72" y="55" width="3" height="16" fill="white"/>
+        <rect x="66.5" y="61.5" width="14" height="3" fill="#111"/>
+        <rect x="72.5" y="55.5" width="2" height="15" fill="#111"/>
+      </svg>`;
       // Random start from edges
       const side = Math.floor(Math.random() * 4);
       const w = window.innerWidth, h = window.innerHeight;
@@ -1064,8 +1103,8 @@ export class Game {
       }
       el.style.left = sx + 'px';
       el.style.top = sy + 'px';
-      // Mirror plane if going right
-      if (vx < 0) el.style.transform = 'scaleX(-1)';
+      // SVG nose faces left; flip when plane moves right
+      if (vx > 0) el.style.transform = 'scaleX(-1)';
       document.body.appendChild(el);
       planeEls.push(el);
       const state = { hp: 3, el, alive: true, x: sx, y: sy, vx, vy };
@@ -1119,7 +1158,7 @@ export class Game {
           if (scoreEl) scoreEl.textContent = `Score: ${this.aaScore}`;
           const planeCountEl = document.getElementById('aa-planes-left');
           if (planeCountEl) planeCountEl.textContent = `Planes: ${planesAlive}`;
-          showMessage(`✈️💥 Condor shot down! ${planesAlive} remaining.`, 'good', 2000);
+          showMessage(`💥 Fw 200 Condor shot down! ${planesAlive} remaining.`, 'good', 2000);
           // If a plane gets through, damage a random merchant
         }
       });
